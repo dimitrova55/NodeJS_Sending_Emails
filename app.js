@@ -3,6 +3,8 @@ import dotenv from "dotenv";
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import path from 'path';
+import ejs from "ejs";
+import { log } from "console";
 
 // Get __filename and __dirname equivalent in ESM
 const __filename = fileURLToPath(import.meta.url);
@@ -71,8 +73,7 @@ function sendEmailWithAttachment(){
         {
           filename: 'attachment_2.jpg',
           path: path.join(__dirname, 'public', 'picture_1.jpg') 
-        }]
-      
+        }]      
   }
 
   transport.sendMail(mailOptions, (error, info) => {
@@ -109,6 +110,62 @@ function sendEmailWithEmbeddedImage(){
   })
 }
 
+
 // sendEmail();
 // sendEmailWithAttachment();
-sendEmailWithEmbeddedImage();
+// sendEmailWithEmbeddedImage();
+
+/***** Sending Emails with Templates ******/
+
+const templateData = {userName: "John Doe"}
+
+/*
+ejs.renderFile(__dirname + '/views/index.ejs', templateData, (error, template) => {
+  if(error)
+    console.log('Error: ', error);
+
+  const mailOptions = {
+        from: {
+          name: "Dilyana Dimitrova",
+          address: 'dilly@email.bg'
+        },
+        // to: 'user@domain.com',
+        to: ['user@domain.com', 'second_user@domain.com', 'third_user@domain.com'],
+        subject: 'Email test.',
+        html: template
+    }
+
+    transport.sendMail(mailOptions, (error, info) => {
+      if(error)
+        return console.log(`Error: ${error}`);
+  
+      return console.log(`Email sent successfully. Info: ${JSON.stringify(info)}`);       
+    }) 
+})
+*/
+
+/***** Sending Emails with Templates ******/
+
+async function sendEmailWithTemplate(to, subject, template, data) {
+  try {
+    const html = await ejs.renderFile(__dirname + '/views/' + template, data, {async: true})
+
+    const mailOptions = {
+      from: 'dilly@email.bg',
+      to: to,
+      subject: subject,
+      html: html
+    }
+
+    await transport.sendMail(mailOptions)
+    console.log('Message sent successfully.');
+
+  } catch (error) {
+    console.log('Error: ', error);    
+  }
+}
+
+sendEmailWithTemplate('user@domain.com', 'Dynamic Email Templates with EJS.', 'index.ejs', templateData)
+
+/* if we are going to use the sendEmailWithTemplates function inside an express route,
+ * the 'await' word shoud be added infront! */
